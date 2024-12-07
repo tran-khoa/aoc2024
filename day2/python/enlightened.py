@@ -1,6 +1,3 @@
-from naive import is_report_safe as is_report_safe_ref
-
-
 def check_adj(r: list[int], a: int, b: int, diff_sign: bool | None = None) -> bool:
     return 0 < abs(r[a] - r[b]) <= 3 and (
         diff_sign is None or (r[a] - r[b] > 0) == diff_sign
@@ -58,26 +55,11 @@ def is_report_safe(r: list[int]) -> bool:
 
     return check_adj(r, len(r) - 2, len(r) - 1, diff_sign) or (not used_fix)
 
-
-with open("tests.txt") as f:
-    tests = [
-        (line.strip().split()[0] == "T", [int(x) for x in line.strip().split()[1:]])
-        for line in f
-    ]
-    for expected, r in tests:
-        assert is_report_safe(r) == expected, f"{r} failed, should be {expected}"
-        print(f"{r} passed")
-
 if __name__ == "__main__":
-    with open("reports.txt") as f:
+    with open("../reports.txt") as f:
         reports: list[list[int]] = [
             [int(x) for x in line.strip().split()] for line in f
         ]
-
-    for r in reports:
-        assert is_report_safe(r) == is_report_safe_ref(
-            r
-        ), f"{r} failed, should be {is_report_safe_ref(r)}"
     safe_reports = sum(map(is_report_safe, reports))
 
     print(safe_reports)

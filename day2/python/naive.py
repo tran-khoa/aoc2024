@@ -22,7 +22,7 @@ def is_report_safe(r: list[int]) -> bool:
 
 
 if __name__ == '__main__':
-    with open('reports.txt') as f:
+    with open('../reports.txt') as f:
         reports: list[list[int]] = [[int(x) for x in line.strip().split()] for line in f]
 
     safe_reports = sum(map(is_report_safe, reports))
