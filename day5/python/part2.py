@@ -2,7 +2,7 @@ import itertools
 
 rules: list[tuple[int, int]] = []
 updates: list[tuple[int, ...]] = []
-with open('inputs.txt') as f:
+with open('../inputs.txt') as f:
     update_section = False
     for line in f.readlines():
         if line.strip() == '':

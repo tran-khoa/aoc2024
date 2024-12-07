@@ -1,135 +1,109 @@
 use std::collections::{HashMap, HashSet};
 use std::fs;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-enum Dir {
-    Up,
-    Down,
-    Left,
-    Right,
-}
-impl Dir {
-    fn turn(&self) -> Dir {
-        match self {
-            Dir::Up => Dir::Right,
-            Dir::Right => Dir::Down,
-            Dir::Down => Dir::Left,
-            Dir::Left => Dir::Up,
-        }
-    }
-    fn walk(&self, pos: (isize, isize)) -> (isize, isize) {
-        match self {
-            Dir::Up => (pos.0 - 1, pos.1),
-            Dir::Down => (pos.0 + 1, pos.1),
-            Dir::Left => (pos.0, pos.1 - 1),
-            Dir::Right => (pos.0, pos.1 + 1),
-        }
-    }
+#[derive(PartialEq, Eq, Clone)]
+enum State {
+    UNSEEN,
+    WIP,
+    SEEN,
 }
 
-fn full_walk(obstacles: Vec<(isize, isize)>, start: (isize, isize), initial_state: Dir, height: isize, width: isize) -> Option<isize> {
-    let mut state = initial_state;
-    let mut visited: HashMap<(isize, isize), Vec<Dir>> = HashMap::new();
-    let mut pos = start;
-    visited.insert(
-        pos, vec![state]
-    );
-
-    loop {
-        let next_pos = state.walk(pos);
-        if next_pos.0 < 0 || next_pos.0 >= height || next_pos.1 < 0 || next_pos.1 >= width {
-            break;
-        }
-        if obstacles.contains(&next_pos) {
-            state = state.turn();
+fn part1(rules: &Vec<(u32, u32)>, updates: &Vec<Vec<u32>>) -> u32 {
+    let mut adjacency_dict: HashMap<u32, HashSet<u32>> = HashMap::new();
+    for rule in rules {
+        if let Some(adjacent) = adjacency_dict.get_mut(&rule.1) {
+            adjacent.insert(rule.0);
         } else {
-            if visited.contains_key(&next_pos) {
-                if visited.get(&next_pos).unwrap().contains(&state) {
-                    return None;
+            adjacency_dict.insert(rule.1, HashSet::from([rule.0]));
+        }
+    }
+    updates.iter().map(
+        |update| {
+            let all_numbers: HashSet<u32> = update.iter().cloned().collect();
+            let mut seen_numbers: HashSet<u32> = HashSet::new();
+            for &num in update {
+                if adjacency_dict.contains_key(&num) && adjacency_dict[&num].iter().any(
+                    |&adj_num| all_numbers.contains(&adj_num) && !seen_numbers.contains(&adj_num)
+                ) {
+                    return 0u32;
                 }
-                visited.get_mut(&next_pos).unwrap().push(state);
-            } else {
-                visited.insert(next_pos, vec![state]);
+                seen_numbers.insert(num);
             }
-            pos = next_pos;
+            return update[update.len() / 2];
         }
-    }
-    Some(visited.len() as isize)
+    ).sum()
 }
 
-fn part1(map_str: &String) -> isize {
-    let mut obstacles: Vec<(isize, isize)> = Vec::new();
-    let mut start: Result<(isize, isize), &str> = Err("No start position found");
-    let height = map_str.lines().count() as isize;
-    assert!(height > 0);
-    let width = map_str.lines().next().unwrap().chars().count() as isize;
-
-    for (row, line) in map_str.lines().enumerate() {
-        for (col, c) in line.chars().enumerate() {
-            if c == '#' {
-                obstacles.push((row as isize, col as isize));
-            } else if c == '^' {
-                start = Ok((row as isize, col as isize));
-            }
-        }
-    }
-
-    let step_count = full_walk(obstacles, start.unwrap(), Dir::Up, height, width).unwrap();
-    step_count
-    // 4967
-}
-
-fn part2_inefficient(map_str: &String) {
-    let mut obstacles: Vec<(isize, isize)> = Vec::new();
-    let mut start: Result<(isize, isize), &str> = Err("No start position found");
-    let height = map_str.lines().count() as isize;
-    assert!(height > 0);
-    let width = map_str.lines().next().unwrap().chars().count() as isize;
-
-    for (row, line) in map_str.lines().enumerate() {
-        for (col, c) in line.chars().enumerate() {
-            if c == '#' {
-                obstacles.push((row as isize, col as isize));
-            } else if c == '^' {
-                start = Ok((row as isize, col as isize));
-            }
-        }
-    }
-    let mut state = Dir::Up;
-    let mut pos = start.unwrap();
-    let mut possible_obstacles: HashSet<(isize, isize)> = HashSet::new();
-
-    loop {
-        let next_pos = state.walk(pos);
-        if next_pos.0 < 0 || next_pos.0 >= height || next_pos.1 < 0 || next_pos.1 >= width {
-            break;
-        }
-
-        if obstacles.contains(&next_pos) {
-            state = state.turn();
+fn part2(rules: &Vec<(u32, u32)>, updates: &Vec<Vec<u32>>) -> u32 {
+    let mut adjacency_dict: HashMap<u32, HashSet<u32>> = HashMap::new();
+    for rule in rules {
+        if let Some(adjacent) = adjacency_dict.get_mut(&rule.0) {
+            adjacent.insert(rule.1);
         } else {
-            // assume next_pos is obstacle
-            if !possible_obstacles.contains(&next_pos) {
-                let mut sub_obstacles = obstacles.clone();
-                sub_obstacles.push(next_pos);
-                if full_walk(sub_obstacles, pos, state, height, width).is_none() {
-                    possible_obstacles.insert(next_pos);
+            adjacency_dict.insert(rule.0, HashSet::from([rule.1]));
+        }
+    }
+
+    let mut safe_middle_sum: u32 = 0;
+    for update in updates {
+        let mut states: Vec<State> = vec![State::UNSEEN; update.len()];
+        let mut reorder: Vec<u32> = Vec::new();
+        let unique_values: HashSet<u32> = update.iter().cloned().collect();
+
+        let mut stack: Vec<usize> = Vec::new();
+
+        while let Some(root_idx) = states.iter().position(|x| *x == State::UNSEEN) {
+            stack.push(root_idx);
+            while let Some(idx) = stack.pop() {
+                match states[idx] {
+                    State::WIP => {
+                        states[idx] = State::SEEN;
+                        reorder.push(update[idx]);
+                    }
+                    State::SEEN => continue,
+                    State::UNSEEN => {
+                        states[idx] = State::WIP;
+                        stack.push(idx);
+                        for &adj_val in adjacency_dict.get(&update[idx]).unwrap().intersection(&unique_values) {
+                            if let Some(adj_idx) = update.iter().position(|&x| x == adj_val) {
+                                stack.push(adj_idx);
+                            } else {
+                                panic!("Value not found in update list");
+                            }
+                        }
+                    }
                 }
             }
-            pos = next_pos;
+        }
+        reorder.reverse();
+        if reorder != *update {
+            safe_middle_sum += reorder[reorder.len() / 2];
         }
     }
-    println!("{:?}", possible_obstacles);
-    println!("Part 2 result: {}", possible_obstacles.len());
-    assert!(possible_obstacles.len() < 1831);
-    //
+    safe_middle_sum
 }
 
 fn main() {
-    let map_str: String = match fs::read_to_string("map.txt") {
-        Ok(map) => map,
+    let mut rules: Vec<(u32, u32)> = Vec::new();
+    let mut updates: Vec<Vec<u32>> = Vec::new();
+    match fs::read_to_string("../inputs.txt") {
+        Ok(inputs) => {
+            let mut update_section = false;
+            for line in inputs.lines() {
+                if line == "" {
+                    update_section = true;
+                    continue;
+                }
+                if !update_section {
+                    let rule: Vec<u32> = line.split("|").map(|num| num.parse().unwrap()).collect();
+                    rules.push((rule[0], rule[1]));
+                } else {
+                    updates.push(line.split(",").map(|num| num.parse().unwrap()).collect());
+                }
+            }
+        },
         Err(e) => panic!("Failed to read map.txt: {}", e),
     };
-    println!("Part 1 result: {}", part1(&map_str));
-    part2_inefficient(&map_str);
+    println!("{}", part1(&rules, &updates));
+    println!("{}", part2(&rules, &updates));
 }
