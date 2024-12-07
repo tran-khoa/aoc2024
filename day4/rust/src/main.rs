@@ -1,6 +1,7 @@
+use std::error::Error;
 use candle_core::DType::{F32, U32};
 use candle_core::Device::Cpu;
-use candle_core::{Error, Module, Tensor};
+use candle_core::{Module, Tensor};
 use candle_nn::conv::{Conv2d, Conv2dConfig};
 use itertools::iproduct;
 use std::cmp::max;
@@ -46,7 +47,7 @@ fn part1(puzzle: &Vec<Vec<char>>) -> u32 {
         .sum()
 }
 
-fn part2(puzzle: &Vec<Vec<char>>) -> Result<u32, Error> {
+fn part2(puzzle: &Vec<Vec<char>>) -> Result<u32, Box<dyn Error>> {
     let base: u32 = 4;
     let [rows, cols] = [puzzle.len(), puzzle[0].len()];
     let puzzle: Vec<Vec<u32>> = puzzle
