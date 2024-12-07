@@ -12,7 +12,7 @@ def enc(letter):
 
 base = 4
 
-with open("puzzle.txt") as f:
+with open("../puzzle.txt") as f:
     arr = torch.tensor([[enc(c) for c in label.strip()] for label in f.readlines()])
 
 kernel = torch.tensor([[base**0, 0, base**1], [0, base**2, 0], [base**3, 0, base**4]])

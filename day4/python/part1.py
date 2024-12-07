@@ -1,4 +1,4 @@
-with open("puzzle.txt") as f:
+with open("../puzzle.txt") as f:
     pz = [[c for c in label.strip()] for label in f.readlines()]
 
 count = 0
