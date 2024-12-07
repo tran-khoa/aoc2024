@@ -1,6 +1,6 @@
 import re
 
-with open("instructions.txt") as f:
+with open("../instructions.txt") as f:
     instructions = f.read().replace("\n", "")
     print(instructions)
 valid_sections = re.findall(r"(?:^|do\(\))(.*?)(?:don't\(\)|$)", instructions)
