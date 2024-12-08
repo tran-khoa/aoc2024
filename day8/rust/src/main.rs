@@ -51,7 +51,6 @@ fn part2(map: &str, positions: &HashMap<char, Vec<(usize, usize)>>) -> usize {
             }
         }
     }
-    println!("{:?}", antinodes);
     antinodes.iter().count()
 }
 
