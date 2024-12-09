@@ -1,8 +1,5 @@
 import Data.Char (digitToInt)
 import Data.Int (Int64)
-import Control.Arrow (ArrowChoice(left))
-import Distribution.Simple (UserHooks(preClean))
-main::IO()
 
 blockHash :: Int64 -> Int64 -> Int64 -> Int64
 blockHash 0 size id = id * quot ((size - 1) * size) 2
@@ -24,11 +21,10 @@ processGap disk current_pos left_id right_id hash
         (gap:notfirst) = disk
         block = last disk
     
-
 part1 :: [Int64] -> Int64
 part1 disk = processBlock disk 0 0 (((fromIntegral.length) disk - 1) `quot` 2) 0
 
-
+main::IO()
 main = do
   disk_map_str <- readFile "../diskmap.txt"
   -- let disk_map_str = "2333133121414131402"
