@@ -24,6 +24,8 @@ processGap disk current_pos left_id right_id hash
 part1 :: [Int64] -> Int64
 part1 disk = processBlock disk 0 0 (((fromIntegral.length) disk - 1) `quot` 2) 0
 
+extractGaps :: [Int64] -> [(Int64, Int64)]
+
 main::IO()
 main = do
   disk_map_str <- readFile "../diskmap.txt"
