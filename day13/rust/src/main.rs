@@ -1,70 +1,9 @@
 use regex::RegexBuilder;
-use std::ops;
 
 #[derive(Debug, Clone, Copy)]
 struct Point {
-    x: usize,
-    y: usize,
-}
-impl Point {
-    fn l1(&self) -> usize {
-        self.x + self.y
-    }
-}
-impl ops::Add<Point> for Point {
-    type Output = Point;
-    fn add(self, other: Point) -> Point {
-        Point {
-            x: self.x + other.x,
-            y: self.y + other.y,
-        }
-    }
-}
-impl ops::Sub<Point> for Point {
-    type Output = Option<Point>;
-    fn sub(self, other: Point) -> Option<Point> {
-        if self.x < other.x || self.y < other.y {
-            return None;
-        }
-        Some(Point {
-            x: self.x - other.x,
-            y: self.y - other.y,
-        })
-    }
-}
-impl ops::Mul<usize> for Point {
-    type Output = Point;
-    fn mul(self, other: usize) -> Point {
-        Point {
-            x: self.x * other,
-            y: self.y * other,
-        }
-    }
-}
-impl ops::Div<usize> for Point {
-    type Output = Option<Point>;
-    fn div(self, other: usize) -> Option<Point> {
-        if self.x % other != 0 || self.y % other != 0 {
-            return None;
-        }
-        Some(Point {
-            x: self.x / other,
-            y: self.y / other,
-        })
-    }
-}
-impl ops::BitOr<Point> for Point {
-    type Output = Option<usize>;
-    fn bitor(self, other: Point) -> Option<usize> {
-        /*
-        If vector A is 'divided by' vector B, return factor
-         */
-        let factor = self.x / other.x;
-        if other.x * factor == self.x && other.y * factor == self.y {
-            return Some(factor);
-        }
-        None
-    }
+    x: u64,
+    y: u64,
 }
 
 #[derive(Debug)]
@@ -74,69 +13,41 @@ struct Arcade {
     prize: Point,
 }
 
-fn optimum_arcade_prize(arcade: &Arcade) -> Option<usize> {
-    let (expensive_vec, cheap_vec, cheap_cost, expensive_cost) =
-        if arcade.button_a.l1() * 3 > arcade.button_b.l1() {
-            (arcade.button_a, arcade.button_b, 1, 3)
-        } else {
-            (arcade.button_b, arcade.button_a, 3, 1)
-        };
-    let mut num_expensive: usize = 0;
-    loop {
-        let remainder = arcade.prize - expensive_vec * num_expensive;
-        if let Some(remainder) = remainder {
-            if let Some(num_cheap) = remainder | cheap_vec {
-                return Some(cheap_cost * num_cheap + expensive_cost * num_expensive);
-            }
-        } else {
-            return None;
-        }
-        num_expensive += 1;
+fn math_optimum_arcade_prize(arcade: &Arcade) -> Option<u64> {
+    let x11 = arcade.button_a.x as f64;
+    let x21 = arcade.button_a.y as f64;
+    let x12 = arcade.button_b.x as f64;
+    let x22 = arcade.button_b.y as f64;
+
+    let prize_x = arcade.prize.x as f64;
+    let prize_y = arcade.prize.y as f64;
+
+    let det = x11 * x22 - x12 * x21;
+    let a = (x22 * prize_x - x12 * prize_y) / det;
+    let b = (x11 * prize_y - x21 * prize_x) / det;
+
+    if a.fract() == 0.0 && b.fract() == 0.0 && a >= 0.0 && b >= 0.0 {
+        return Some(3 * a as u64 + b as u64);
     }
+    None
 }
 
-fn part1(arcades: &Vec<Arcade>) -> usize {
-    arcades.iter().filter_map(|a| optimum_arcade_prize(a)).sum()
+fn part1(arcades: &Vec<Arcade>) -> u64 {
+    arcades.iter().filter_map(|a| math_optimum_arcade_prize(a)).sum()
 }
-
-fn naive_integer_decomp(n: usize) -> Vec<usize> {
-    let mut factors = vec![];
-    let mut n = n;
-    let mut d = 2;
-    while d * d < n {
-        while n % d == 0 {
-            factors.push(d);
-            n /= d;
-        }
-        d += 1;
-    }
-    factors
-}
-
-fn common_factors(n: usize, m: usize) -> Vec<usize> {
-    let decomp_m = naive_integer_decomp(m);
-
-    naive_integer_decomp(n)
-        .iter()
-        .filter(|&f| decomp_m.contains(f))
-        .cloned()
-        .collect()
-}
-
-fn part2(arcades: &Vec<Arcade>) {
+fn part2(arcades: &Vec<Arcade>) -> u64{
     let arcades: Vec<Arcade> = arcades
         .iter()
         .map(|a| Arcade {
             button_a: a.button_a,
             button_b: a.button_b,
-            prize: a.prize
-                + Point {
-                    x: 10000000000000,
-                    y: 10000000000000,
+            prize: Point {
+                    x: a.prize.x + 10000000000000,
+                    y: a.prize.y + 10000000000000,
                 },
         })
         .collect();
-    // wip
+    part1(&arcades)
 }
 
 fn main() {
