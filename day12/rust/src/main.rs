@@ -1,4 +1,9 @@
-use std::ops::Deref;
+mod grid;
+
+use crate::grid::{Direction, Grid, PRINCIPAL_DIRECTIONS};
+use std::collections::{HashMap, HashSet};
+
+type Coords = (usize, usize);
 
 #[derive(Clone, PartialEq, Eq)]
 enum State {
@@ -7,118 +12,45 @@ enum State {
     SEEN,
 }
 
-#[derive(Clone, PartialEq, Eq, Copy)]
-enum Direction {
-    RIGHT,
-    DOWN,
-    LEFT,
-    UP,
-}
-
-struct Plots {
-    data: Vec<Vec<char>>,
-    height: usize,
-    width: usize,
-}
-impl Plots {
-    fn new(data: Vec<Vec<char>>) -> Self {
-        let height = data.len();
-        let width = data[0].len();
-        Plots {
-            data,
-            height,
-            width,
-        }
-    }
-    fn valid_coords(&self, xy: (i32, i32)) -> bool {
-        0 <= xy.0 && xy.0 < self.height as i32 && 0 <= xy.1 && xy.1 < self.width as i32
-    }
-    fn walk(&self, pos: (usize, usize), direction: Direction) -> Option<(usize, usize)> {
-        let pos: (i32, i32) = (pos.0 as i32, pos.1 as i32);
-        let new_pos = match direction {
-            Direction::RIGHT => (pos.0, pos.1 + 1),
-            Direction::DOWN => (pos.0 + 1, pos.1),
-            Direction::LEFT => (pos.0, pos.1 - 1),
-            Direction::UP => (pos.0 - 1, pos.1),
-        };
-        if self.valid_coords(new_pos) {
-            Some((new_pos.0 as usize, new_pos.1 as usize))
-        } else {
-            None
-        }
-    }
-    fn get_label(&self, pos: (usize, usize)) -> char {
-        self.data[pos.0][pos.1]
-    }
-    fn follow_edge(
-        &self,
-        pos: (usize, usize),
-        current_direction: Direction,
-        current_label: char,
-    ) -> ((usize, usize), Direction) {
-        let next_pos = self.walk(pos, current_direction);
-        if next_pos.is_some() && self.get_label(next_pos.unwrap()) == current_label {
-            (next_pos.unwrap(), current_direction)
-        } else {
-            let next_direction = match current_direction {
-                Direction::RIGHT => Direction::DOWN,
-                Direction::DOWN => Direction::LEFT,
-                Direction::LEFT => Direction::UP,
-                Direction::UP => Direction::RIGHT,
-            };
-            (self.walk(pos, next_direction).unwrap(), next_direction)
-        }
-    }
-}
-impl Deref for Plots {
-    type Target = Vec<Vec<char>>;
-    fn deref(&self) -> &Self::Target {
-        &self.data
-    }
-}
+type Plots = Grid<char>;
 
 fn part1(plots: &Plots) -> usize {
-    let mut states = vec![vec![State::NEW; plots.height]; plots.width];
+    let mut states = Grid::new(vec![vec![State::NEW; plots.height]; plots.width]);
     let mut price: usize = 0;
 
-    for (i, j) in itertools::iproduct!(0..plots.height, 0..plots.width) {
-        if states[i][j] == State::SEEN {
+    for root in itertools::iproduct!(0..plots.height, 0..plots.width) {
+        if states[root] == State::SEEN {
             continue;
         }
 
         let mut current_area: usize = 0;
         let mut current_perimeter: usize = 0;
-        let current_label = plots[i][j];
+        let current_label = plots[root];
 
-        let mut stack: Vec<(usize, usize)> = Vec::new();
-        stack.push((i, j));
+        let mut stack: Vec<Coords> = Vec::new();
+        stack.push(root);
         while stack.len() > 0 {
-            let (x, y) = stack.pop().unwrap();
-            match states[x][y] {
+            let curr = stack.pop().unwrap();
+            match states[curr] {
                 State::SEEN => continue,
                 State::WIP => {
-                    states[x][y] = State::SEEN;
+                    states[curr] = State::SEEN;
                 }
                 State::NEW => {
-                    states[x][y] = State::WIP;
+                    states[curr] = State::WIP;
                     current_perimeter += 4;
                     current_area += 1;
-                    [
-                        Direction::DOWN,
-                        Direction::RIGHT,
-                        Direction::UP,
-                        Direction::LEFT,
-                    ]
-                    .iter()
-                    .filter_map(|new_pos| plots.walk((x, y), *new_pos))
-                    .for_each(|(nx, ny)| {
-                        if plots[nx][ny] == current_label {
-                            current_perimeter -= 1;
-                            if states[nx][ny] == State::NEW {
-                                stack.push((nx, ny));
+                    PRINCIPAL_DIRECTIONS
+                        .iter()
+                        .filter_map(|d| plots.walk(curr, *d))
+                        .for_each(|next| {
+                            if plots[next] == current_label {
+                                current_perimeter -= 1;
+                                if states[next] == State::NEW {
+                                    stack.push(next);
+                                }
                             }
-                        }
-                    });
+                        });
                 }
             }
         }
@@ -127,105 +59,101 @@ fn part1(plots: &Plots) -> usize {
     price
 }
 
-fn compute_perimeter(plots: &Plots, start: (usize, usize)) -> usize {
-    let label = plots.get_label(start);
+fn graph_components(plots: &Plots, vertices: &HashSet<Coords>) -> usize {
+    if vertices.len() == 0 {
+        return 0;
+    } else if vertices.len() == 1 {
+        return 1;
+    }
+    let mut vertex_state: HashMap<Coords, State> =
+        vertices.iter().map(|v| (*v, State::NEW)).collect();
+    let mut num_components: usize = 0;
+    for root in vertices {
+        if vertex_state[root] != State::NEW {
+            continue;
+        }
+        let mut stack: Vec<Coords> = Vec::new();
+        stack.push(*root);
+        num_components += 1;
 
-    let mut perimeter = 0;
-    for dir in [
-        Direction::DOWN,
-        Direction::RIGHT,
-        Direction::UP,
-        Direction::LEFT,
-    ] {
-        if let Some(next_pos) = plots.walk(pos, dir) {
-            if plots[next_pos.0][next_pos.1] != label {
-                perimeter += 1;
+        while stack.len() > 0 {
+            let curr_pos = stack.pop().unwrap();
+            for d in PRINCIPAL_DIRECTIONS {
+                if let Some(next_pos) = plots.walk(curr_pos, d) {
+                    match vertex_state.get(&next_pos) {
+                        Some(State::NEW) => {
+                            vertex_state.insert(next_pos, State::WIP);
+                            stack.push(next_pos);
+                        }
+                        Some(State::WIP) => {
+                            vertex_state.insert(next_pos, State::SEEN);
+                        }
+                        Some(State::SEEN) => continue,
+                        None => continue,
+                    };
+                }
             }
         }
     }
-    perimeter
+    num_components
 }
 
 fn part2(plots: &Plots) -> usize {
     // invariant: for each dfs call, the root is an 'upper left' edge corner
-    let mut states = vec![vec![State::NEW; plots.height]; plots.width];
+    let mut states = Grid::new(vec![vec![State::NEW; plots.height]; plots.width]);
     let mut price: usize = 0;
+
+    // outer loop: iterate over all plots
     for root in itertools::iproduct!(0..plots.height, 0..plots.width) {
-        if states[root.0][root.1] == State::SEEN {
+        if states[root] == State::SEEN {
             continue;
         }
+        let current_label = plots[root];
         let mut current_area: usize = 0;
-        let mut current_perimeter: usize = 0;
-        let current_label = plots[root.0][root.1];
-        let mut current_edge_direction = Some(Direction::RIGHT);
+        let mut edges: HashMap<Direction, HashSet<Coords>> = HashMap::new();
 
-        let mut stack: Vec<(usize, usize)> = Vec::new();
+        let mut stack: Vec<Coords> = Vec::new();
         stack.push(root);
         while stack.len() > 0 {
-            let (i, j) = stack.pop().unwrap();
-            match states[i][j] {
+            let curr_pos = stack.pop().unwrap();
+            match states[curr_pos] {
                 State::SEEN => continue,
-                State::WIP => states[i][j] = State::SEEN,
+                State::WIP => states[curr_pos] = State::SEEN,
                 State::NEW => {
-                    states[i][j] = State::WIP;
+                    states[curr_pos] = State::WIP;
                     current_area += 1;
 
-                    if let Some(edge_direction) = current_edge_direction {
-                        let (next_pos, next_direction) = plots.follow_edge((i, j), edge_direction);
-                        if edge_direction != next_direction {
-                            current_perimeter += 1;
-                        }
-                        if next_pos == root {
-                            current_edge_direction = None;
+                    for direction in PRINCIPAL_DIRECTIONS {
+                        if let Some(next_pos) = plots.walk(curr_pos, direction) {
+                            if plots[next_pos] == current_label {
+                                if states[next_pos] == State::NEW {
+                                    stack.push(next_pos);
+                                }
+                            } else {
+                                let d_edges =
+                                    edges.entry(direction).or_insert_with(|| HashSet::new());
+                                d_edges.insert(curr_pos);
+                            }
                         } else {
-                            current_edge_direction = Some(next_direction);
-                            for dir in [
-                                Direction::DOWN,
-                                Direction::RIGHT,
-                                Direction::UP,
-                                Direction::LEFT,
-                            ] {
-                                if dir != next_direction {
-                                    if let Some(next_pos) = plots.walk(next_pos, dir) {
-                                        if plots[next_pos.0][next_pos.1] == current_label {
-                                            stack.push(next_pos);
-                                        }
-                                    }
-                                }
-                            }
-                            stack.push(next_pos); // push last
+                            let d_edges = edges.entry(direction).or_insert_with(|| HashSet::new());
+                            d_edges.insert(curr_pos);
                         }
-                    } else {
-                        [
-                            Direction::DOWN,
-                            Direction::RIGHT,
-                            Direction::UP,
-                            Direction::LEFT,
-                        ]
-                        .iter()
-                        .filter_map(|new_pos| plots.walk((i, j), *new_pos))
-                        .for_each(|(nx, ny)| {
-                            if plots[nx][ny] == current_label {
-                                if states[nx][ny] == State::NEW {
-                                    stack.push((nx, ny));
-                                }
-                            }
-                        });
                     }
                 }
             }
         }
+
+        let current_perimeter: usize = edges
+            .values()
+            .map(|d_edges| graph_components(plots, &d_edges))
+            .sum();
         price += current_area * current_perimeter;
-        println!(
-            "Plot {}, area={}, perimeter={}",
-            current_label, current_area, current_perimeter
-        );
     }
     price
 }
 
 fn main() {
-    let plots: Vec<Vec<char>> = std::fs::read_to_string("../test_plots.txt")
+    let plots: Vec<Vec<char>> = std::fs::read_to_string("../plots.txt")
         .unwrap()
         .lines()
         .map(|line| line.chars().collect())
