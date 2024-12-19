@@ -99,7 +99,6 @@ fn graph_components(plots: &Plots, vertices: &HashSet<Coords>) -> usize {
 }
 
 fn part2(plots: &Plots) -> usize {
-    // invariant: for each dfs call, the root is an 'upper left' edge corner
     let mut states = Grid::new(vec![vec![State::NEW; plots.height]; plots.width]);
     let mut price: usize = 0;
 

@@ -225,7 +225,7 @@ fn part2(walls: &HashSet<Coords>, start_xy: Coords, end_xy: Coords) -> Option<i3
 
     let mut g_scores: HashMap<Node, i32> = HashMap::new();
     g_scores.insert(start_node, 0);
-    
+
     while !open_set.is_empty() {
         let current = open_set.pop().unwrap();
         if current.node.coords == end_xy {
@@ -290,7 +290,10 @@ fn part2(walls: &HashSet<Coords>, start_xy: Coords, end_xy: Coords) -> Option<i3
         .iter()
         .filter(|(&k, _)| k.coords == end_xy)
         .min_by_key(|(&k, _)| g_scores[&k])
-        .unwrap().1.iter().collect();
+        .unwrap()
+        .1
+        .iter()
+        .collect();
     let mut visited_set: HashSet<Coords> = HashSet::new();
     visited_set.insert(end_xy);
     while todo_set.len() > 0 {
@@ -300,7 +303,7 @@ fn part2(walls: &HashSet<Coords>, start_xy: Coords, end_xy: Coords) -> Option<i3
             came_from[curr_node].iter().for_each(|n| todo_set.push(&n));
         }
     }
-    
+
     // col = 14, row = 15
     for r in 0..15 {
         for col in 0..15 {

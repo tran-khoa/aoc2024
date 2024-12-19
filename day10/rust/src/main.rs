@@ -1,10 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-fn dfs_paths(
-    map: &Vec<Vec<u32>>,
-    pos: (usize, usize),
-    cache: &mut HashMap<(usize, usize), u32>
-) {
+fn dfs_paths(map: &Vec<Vec<u32>>, pos: (usize, usize), cache: &mut HashMap<(usize, usize), u32>) {
     if cache.contains_key(&pos) {
         return;
     }
@@ -16,7 +12,11 @@ fn dfs_paths(
     let mut paths = 0;
     for (dx, dy) in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
         let neighbor_pos = (pos.0 as i32 + dx, pos.1 as i32 + dy);
-        if neighbor_pos.0 < 0 || neighbor_pos.0 >= map.len() as i32 || neighbor_pos.1 < 0 || neighbor_pos.1 >= map[0].len() as i32 {
+        if neighbor_pos.0 < 0
+            || neighbor_pos.0 >= map.len() as i32
+            || neighbor_pos.1 < 0
+            || neighbor_pos.1 >= map[0].len() as i32
+        {
             continue;
         }
         let neighbor_pos = (neighbor_pos.0 as usize, neighbor_pos.1 as usize);
@@ -32,7 +32,7 @@ fn dfs_paths(
 fn dfs_unique_ends(
     map: &Vec<Vec<u32>>,
     pos: (usize, usize),
-    cache: &mut HashMap<(usize, usize), HashSet<(usize, usize)>>
+    cache: &mut HashMap<(usize, usize), HashSet<(usize, usize)>>,
 ) {
     if cache.contains_key(&pos) {
         return;
@@ -45,7 +45,11 @@ fn dfs_unique_ends(
     cache.insert(pos, HashSet::new());
     for (dx, dy) in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
         let neighbor_pos = (pos.0 as i32 + dx, pos.1 as i32 + dy);
-        if neighbor_pos.0 < 0 || neighbor_pos.0 >= map.len() as i32 || neighbor_pos.1 < 0 || neighbor_pos.1 >= map[0].len() as i32 {
+        if neighbor_pos.0 < 0
+            || neighbor_pos.0 >= map.len() as i32
+            || neighbor_pos.1 < 0
+            || neighbor_pos.1 >= map[0].len() as i32
+        {
             continue;
         }
         let neighbor_pos = (neighbor_pos.0 as usize, neighbor_pos.1 as usize);
@@ -67,7 +71,7 @@ fn part1(map: &Vec<Vec<u32>>) -> u32 {
             score_sum += cache[&(i, j)].len() as u32;
         }
     }
-   score_sum
+    score_sum
 }
 
 fn part2(map: &Vec<Vec<u32>>) -> u32 {

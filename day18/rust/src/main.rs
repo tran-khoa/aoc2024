@@ -68,7 +68,6 @@ fn part1(obstacles: &Vec<Coords>, max_x: i32, max_y: i32, first_bytes: usize) ->
 fn part2(obstacles: &Vec<Coords>, max_x: i32, max_y: i32) -> Coords {
     let mut left = 0;
     let mut right = obstacles.len();
-
     while left < right {
         let mid = (left + right) / 2;
         let path_length = part1(obstacles, max_x, max_y, mid);
@@ -80,7 +79,7 @@ fn part2(obstacles: &Vec<Coords>, max_x: i32, max_y: i32) -> Coords {
             right = mid;
         }
     }
-    obstacles[(left as i32 - 1) as usize]
+    obstacles[left - 1]
 }
 
 fn main() {

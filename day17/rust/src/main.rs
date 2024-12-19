@@ -72,6 +72,7 @@ impl Computer {
     fn jump_instruction(&mut self, pos: usize) {
         self.i_ptr = pos;
     }
+
     fn reset(&mut self) {
         self.i_ptr = 0;
         self.a = 0;
@@ -154,10 +155,9 @@ fn part1(comp: &Computer) -> String {
 fn part2(comp: &Computer) -> u64 {
     let mut comp = comp.clone();
 
-    // try to reproduce 0 as output
     let mut search_candidates: Vec<u64> = Vec::new();
     for i in 0..=0b1111111111 {
-        // 10 bits
+        // all 'last' 10 bits predicting the first item correctly
         comp.reset();
         comp.a = i;
         if comp.compute_next_output().unwrap() == *comp.program.first().unwrap() {
@@ -174,7 +174,8 @@ fn part2(comp: &Computer) -> u64 {
                 comp.reset();
                 comp.a = partial_cand;
                 if comp.compute_next_output().unwrap() == target {
-                    new_search_candidates.push(partial_cand << (3 * idx) | cand & ((1 << (3 * idx)) - 1));
+                    new_search_candidates
+                        .push(partial_cand << (3 * idx) | cand & ((1 << (3 * idx)) - 1));
                 }
             }
         });
@@ -193,5 +194,4 @@ fn main() {
 
     println!("Part 1: {}", part1(&comp));
     println!("Part 2: {}", part2(&comp));
-
 }
