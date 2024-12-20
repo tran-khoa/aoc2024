@@ -139,21 +139,18 @@ fn part2(maze: &Maze) -> usize {
         .map(|(i, pos)| (*pos, (path.len() - 1 - i) as i32))
         .collect();
     let mut viable_cheats = 0;
-    for &node in path.iter() {
-        let jump_nodes: Vec<_> = path
+    for (idx, &node) in path.iter().take(path.len() - 100).enumerate() {
+        viable_cheats += path
             .iter()
-            .filter(|&n| {
+            .skip(idx + 100)
+            .map(|n| {
                 let dist = (node - *n).l1();
                 if dist > 20 {
-                    return false;
+                    return 0;
                 }
-                distance_to_end[&node] - distance_to_end[n] - dist >= 100
+                (distance_to_end[&node] - distance_to_end[n] - dist >= 100) as usize
             })
-            .collect();
-        viable_cheats += jump_nodes.len();
-        if distance_to_end[&node] < 100 {
-            break
-        }
+            .sum::<usize>();
     }
     viable_cheats
 }
