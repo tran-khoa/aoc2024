@@ -1,3 +1,4 @@
+use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 
@@ -27,7 +28,13 @@ impl Dir {
     }
 }
 
-fn full_walk(obstacles: HashSet<(isize, isize)>, start: (isize, isize), initial_state: Dir, height: isize, width: isize) -> Option<isize> {
+fn full_walk(
+    obstacles: HashSet<(isize, isize)>,
+    start: (isize, isize),
+    initial_state: Dir,
+    height: isize,
+    width: isize,
+) -> Option<isize> {
     let mut state = initial_state;
     let mut pos = start;
     let mut visited: HashMap<(isize, isize), HashSet<Dir>> = HashMap::new();
@@ -41,13 +48,13 @@ fn full_walk(obstacles: HashSet<(isize, isize)>, start: (isize, isize), initial_
         if obstacles.contains(&next_pos) {
             state = state.turn();
         } else {
-            if visited.contains_key(&next_pos) {
+            if let Vacant(e) = visited.entry(next_pos) {
+                e.insert(HashSet::from([state]));
+            } else {
                 if visited.get(&next_pos).unwrap().contains(&state) {
                     return None;
                 }
                 visited.get_mut(&next_pos).unwrap().insert(state);
-            } else {
-                visited.insert(next_pos, HashSet::from([state]));
             }
             pos = next_pos;
         }
@@ -55,8 +62,7 @@ fn full_walk(obstacles: HashSet<(isize, isize)>, start: (isize, isize), initial_
     Some(visited.len() as isize)
 }
 
-
-fn part1(map_str: &String) -> isize {
+fn part1(map_str: &str) -> isize {
     let mut obstacles: HashSet<(isize, isize)> = HashSet::new();
     let mut start: Result<(isize, isize), &str> = Err("No start position found");
     let height = map_str.lines().count() as isize;
@@ -73,12 +79,11 @@ fn part1(map_str: &String) -> isize {
         }
     }
 
-    let step_count = full_walk(obstacles, start.unwrap(), Dir::Up, height, width).unwrap();
-    step_count
+    full_walk(obstacles, start.unwrap(), Dir::Up, height, width).unwrap()
     // 4967
 }
 
-fn part2_inefficient(map_str: &String) -> usize {
+fn part2_inefficient(map_str: &str) -> usize {
     let mut obstacles: HashSet<(isize, isize)> = HashSet::new();
     let mut visited: HashSet<(isize, isize)> = HashSet::new();
     let mut start: Result<(isize, isize), &str> = Err("No start position found");

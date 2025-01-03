@@ -10,7 +10,7 @@ struct Robot {
     velocity: Array1<i64>,
 }
 
-fn bfs_component(robots: &Vec<Robot>, root: &Robot, states: &mut HashMap<(i64, i64), bool>, threshold: usize) -> usize {
+fn bfs_component(robots: &[Robot], root: &Robot, states: &mut HashMap<(i64, i64), bool>, threshold: usize) -> usize {
     let vertices: HashSet<(i64, i64)> = robots
         .iter()
         .map(|v| (v.position[0], v.position[1]))
@@ -21,7 +21,7 @@ fn bfs_component(robots: &Vec<Robot>, root: &Robot, states: &mut HashMap<(i64, i
     let mut queue: VecDeque<(i64, i64)> = VecDeque::new();
     states.insert(root, true);
     queue.push_back(root);
-    while queue.len() > 0 {
+    while !queue.is_empty() {
         let node = queue.pop_front().unwrap();
         if nodes >= threshold {
             return threshold;
@@ -35,21 +35,21 @@ fn bfs_component(robots: &Vec<Robot>, root: &Robot, states: &mut HashMap<(i64, i
         ];
         for n in neighbors.iter() {
             if vertices.contains(n) && !states[n] {
-                states.insert(n.clone(), true);
-                queue.push_back(n.clone());
+                states.insert(*n, true);
+                queue.push_back(*n);
             }
         }
     }
     nodes
 }
 
-fn find_component(robots: &Vec<Robot>, threshold: usize) -> bool {
+fn find_component(robots: &[Robot], threshold: usize) -> bool {
     let vertices: HashSet<(i64, i64)> = robots
         .iter()
         .map(|v| (v.position[0], v.position[1]))
         .collect();
     let mut states: HashMap<(i64, i64), bool> =
-        HashMap::from_par_iter(vertices.par_iter().map(|v| (v.clone(), false)));
+        HashMap::from_par_iter(vertices.par_iter().map(|v| (*v, false)));
 
     for robot in robots.iter() {
         if states[&(robot.position[0], robot.position[1])] {
@@ -100,7 +100,7 @@ fn part1(robots: &Vec<Robot>, height: i64, width: i64) -> i64 {
         .product()
 }
 
-fn print_robots(robots: &Vec<Robot>, height: i64, width: i64) {
+fn print_robots(robots: &[Robot], height: i64, width: i64) {
     let mut grid: Vec<Vec<char>> = vec![vec!['.'; width as usize]; height as usize];
     for robot in robots.iter() {
         grid[robot.position[1] as usize][robot.position[0] as usize] = '#';

@@ -2,7 +2,7 @@ use regex::Regex;
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-fn parse_inputs(input_str: &String) -> (Vec<&str>, Vec<&str>) {
+fn parse_inputs(input_str: &str) -> (Vec<&str>, Vec<&str>) {
     let parts: Vec<_> = input_str.split("\n\n").collect();
     let patterns: Vec<_> = parts[0].split(", ").collect();
     let designs: Vec<_> = parts[1].split("\n").collect();
@@ -11,8 +11,8 @@ fn parse_inputs(input_str: &String) -> (Vec<&str>, Vec<&str>) {
 
 fn part1(patterns: &Vec<&str>, designs: &Vec<&str>) -> usize {
     let regex_str = format!("^({})*$", patterns.join("|"));
-    let regex = Regex::new(&*regex_str).unwrap();
-    designs.iter().filter(|d| regex.is_match(*d)).count()
+    let regex = Regex::new(&regex_str).unwrap();
+    designs.iter().filter(|d| regex.is_match(d)).count()
 }
 
 struct PatternsUntilIndex {

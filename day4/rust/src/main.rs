@@ -1,4 +1,3 @@
-use std::error::Error;
 use candle_core::DType::{F32, U32};
 use candle_core::Device::Cpu;
 use candle_core::{Module, Tensor};
@@ -6,8 +5,9 @@ use candle_nn::conv::{Conv2d, Conv2dConfig};
 use itertools::iproduct;
 use std::cmp::max;
 use std::collections::HashMap;
+use std::error::Error;
 
-fn part1(puzzle: &Vec<Vec<char>>) -> u32 {
+fn part1(puzzle: &[Vec<char>]) -> u32 {
     let [rows, cols] = [puzzle.len(), puzzle[0].len()];
     // We have negative movement, but leaving the puzzle to the left would mean we drop to the previous row instead,
     // if we do not pad the base.
@@ -29,7 +29,7 @@ fn part1(puzzle: &Vec<Vec<char>>) -> u32 {
                 'S' => "SAMX",
                 _ => return 0,
             };
-            return movements
+            movements
                 .map(|m| {
                     for i in (1..4).rev() {
                         if let Some(letter) = puzzle.get(&(current_idx + m * i)) {
@@ -39,15 +39,15 @@ fn part1(puzzle: &Vec<Vec<char>>) -> u32 {
                         }
                         return 0;
                     }
-                    return 1;
+                    1
                 })
                 .iter()
-                .sum();
+                .sum()
         })
         .sum()
 }
 
-fn part2(puzzle: &Vec<Vec<char>>) -> Result<u32, Box<dyn Error>> {
+fn part2(puzzle: &[Vec<char>]) -> Result<u32, Box<dyn Error>> {
     let base: u32 = 4;
     let [rows, cols] = [puzzle.len(), puzzle[0].len()];
     let puzzle: Vec<Vec<u32>> = puzzle

@@ -6,34 +6,34 @@ type Coords = (i32, i32);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Direction {
-    UP,
-    DOWN,
-    LEFT,
-    RIGHT,
+    Up,
+    Down,
+    Left,
+    Right,
 }
 impl Direction {
     fn translate(&self, from: &Coords) -> Coords {
         match self {
-            Direction::UP => (from.0 - 1, from.1),
-            Direction::DOWN => (from.0 + 1, from.1),
-            Direction::LEFT => (from.0, from.1 - 1),
-            Direction::RIGHT => (from.0, from.1 + 1),
+            Direction::Up => (from.0 - 1, from.1),
+            Direction::Down => (from.0 + 1, from.1),
+            Direction::Left => (from.0, from.1 - 1),
+            Direction::Right => (from.0, from.1 + 1),
         }
     }
     fn turn_clockwise(&self) -> Direction {
         match &self {
-            Direction::UP => Direction::RIGHT,
-            Direction::RIGHT => Direction::DOWN,
-            Direction::DOWN => Direction::LEFT,
-            Direction::LEFT => Direction::UP,
+            Direction::Up => Direction::Right,
+            Direction::Right => Direction::Down,
+            Direction::Down => Direction::Left,
+            Direction::Left => Direction::Up,
         }
     }
     fn turn_counter_clockwise(&self) -> Direction {
         match &self {
-            Direction::UP => Direction::LEFT,
-            Direction::RIGHT => Direction::UP,
-            Direction::DOWN => Direction::RIGHT,
-            Direction::LEFT => Direction::DOWN,
+            Direction::Up => Direction::Left,
+            Direction::Right => Direction::Up,
+            Direction::Down => Direction::Right,
+            Direction::Left => Direction::Down,
         }
     }
 }
@@ -110,7 +110,7 @@ impl PartialEq<Self> for FScoreNode {
 }
 impl PartialOrd<Self> for FScoreNode {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.f_score.cmp(&other.f_score).reverse())
+        Some(self.cmp(other))
     }
 }
 impl Ord for FScoreNode {
@@ -162,7 +162,7 @@ fn part1(walls: &HashSet<Coords>, start_xy: Coords, end_xy: Coords) -> Option<i3
     let mut g_scores: HashMap<Node, i32> = HashMap::new();
     let start_node = Node {
         coords: start_xy,
-        direction: Direction::RIGHT,
+        direction: Direction::Right,
     };
     open_set.insert(start_node, penalized_l1_distance(start_xy, end_xy));
     f_scores.insert(start_node, penalized_l1_distance(start_xy, end_xy));
@@ -216,7 +216,7 @@ fn part2(walls: &HashSet<Coords>, start_xy: Coords, end_xy: Coords) -> Option<i3
     let mut f_scores: HashMap<Node, i32> = HashMap::new();
     let start_node = Node {
         coords: start_xy,
-        direction: Direction::RIGHT,
+        direction: Direction::Right,
     };
     open_set.insert(start_node, penalized_l1_distance(start_xy, end_xy));
     f_scores.insert(start_node, penalized_l1_distance(start_xy, end_xy));
@@ -296,11 +296,10 @@ fn part2(walls: &HashSet<Coords>, start_xy: Coords, end_xy: Coords) -> Option<i3
         .collect();
     let mut visited_set: HashSet<Coords> = HashSet::new();
     visited_set.insert(end_xy);
-    while todo_set.len() > 0 {
-        let curr_node = todo_set.pop().unwrap();
+    while let Some(curr_node) = todo_set.pop() {
         visited_set.insert(curr_node.coords);
         if curr_node.coords != start_xy {
-            came_from[curr_node].iter().for_each(|n| todo_set.push(&n));
+            came_from[curr_node].iter().for_each(|n| todo_set.push(n));
         }
     }
 
@@ -309,15 +308,13 @@ fn part2(walls: &HashSet<Coords>, start_xy: Coords, end_xy: Coords) -> Option<i3
         for col in 0..15 {
             if walls.contains(&(r, col)) {
                 print!("#");
+            } else if visited_set.contains(&(r, col)) {
+                print!("O");
             } else {
-                if visited_set.contains(&(r, col)) {
-                    print!("O");
-                } else {
-                    print!(".");
-                }
+                print!(".");
             }
         }
-        print!("\n");
+        println!();
     }
 
     Some(visited_set.len() as i32)

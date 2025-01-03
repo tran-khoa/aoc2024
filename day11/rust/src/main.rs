@@ -30,12 +30,12 @@ fn blink(stone: u64, blinks_left: u64, cache: &mut Cache) -> u64 {
     result
 }
 
-fn part1(stones: &Vec<u64>) -> u64 {
+fn part1(stones: &[u64]) -> u64 {
     let mut cache = Cache::new();
     stones.iter().map(|x| blink(*x, 25, &mut cache)).sum()
 }
 
-fn part2(stones: &Vec<u64>) -> u64 {
+fn part2(stones: &[u64]) -> u64 {
     let mut cache = Cache::new();
     stones.iter().map(|x| blink(*x, 75, &mut cache)).sum()
 }

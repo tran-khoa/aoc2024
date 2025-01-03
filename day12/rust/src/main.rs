@@ -7,19 +7,19 @@ type Coords = (usize, usize);
 
 #[derive(Clone, PartialEq, Eq)]
 enum State {
-    NEW,
-    WIP,
-    SEEN,
+    New,
+    Wip,
+    Seen,
 }
 
 type Plots = Grid<char>;
 
 fn part1(plots: &Plots) -> usize {
-    let mut states = Grid::new(vec![vec![State::NEW; plots.height]; plots.width]);
+    let mut states = Grid::new(vec![vec![State::New; plots.height]; plots.width]);
     let mut price: usize = 0;
 
     for root in itertools::iproduct!(0..plots.height, 0..plots.width) {
-        if states[root] == State::SEEN {
+        if states[root] == State::Seen {
             continue;
         }
 
@@ -29,15 +29,14 @@ fn part1(plots: &Plots) -> usize {
 
         let mut stack: Vec<Coords> = Vec::new();
         stack.push(root);
-        while stack.len() > 0 {
-            let curr = stack.pop().unwrap();
+        while let Some(curr) = stack.pop() {
             match states[curr] {
-                State::SEEN => continue,
-                State::WIP => {
-                    states[curr] = State::SEEN;
+                State::Seen => continue,
+                State::Wip => {
+                    states[curr] = State::Seen;
                 }
-                State::NEW => {
-                    states[curr] = State::WIP;
+                State::New => {
+                    states[curr] = State::Wip;
                     current_perimeter += 4;
                     current_area += 1;
                     PRINCIPAL_DIRECTIONS
@@ -46,7 +45,7 @@ fn part1(plots: &Plots) -> usize {
                         .for_each(|next| {
                             if plots[next] == current_label {
                                 current_perimeter -= 1;
-                                if states[next] == State::NEW {
+                                if states[next] == State::New {
                                     stack.push(next);
                                 }
                             }
@@ -60,35 +59,34 @@ fn part1(plots: &Plots) -> usize {
 }
 
 fn graph_components(plots: &Plots, vertices: &HashSet<Coords>) -> usize {
-    if vertices.len() == 0 {
+    if vertices.is_empty() {
         return 0;
     } else if vertices.len() == 1 {
         return 1;
     }
     let mut vertex_state: HashMap<Coords, State> =
-        vertices.iter().map(|v| (*v, State::NEW)).collect();
+        vertices.iter().map(|v| (*v, State::New)).collect();
     let mut num_components: usize = 0;
     for root in vertices {
-        if vertex_state[root] != State::NEW {
+        if vertex_state[root] != State::New {
             continue;
         }
         let mut stack: Vec<Coords> = Vec::new();
         stack.push(*root);
         num_components += 1;
 
-        while stack.len() > 0 {
-            let curr_pos = stack.pop().unwrap();
+        while let Some(curr_pos) = stack.pop() {
             for d in PRINCIPAL_DIRECTIONS {
                 if let Some(next_pos) = plots.walk(curr_pos, d) {
                     match vertex_state.get(&next_pos) {
-                        Some(State::NEW) => {
-                            vertex_state.insert(next_pos, State::WIP);
+                        Some(State::New) => {
+                            vertex_state.insert(next_pos, State::Wip);
                             stack.push(next_pos);
                         }
-                        Some(State::WIP) => {
-                            vertex_state.insert(next_pos, State::SEEN);
+                        Some(State::Wip) => {
+                            vertex_state.insert(next_pos, State::Seen);
                         }
-                        Some(State::SEEN) => continue,
+                        Some(State::Seen) => continue,
                         None => continue,
                     };
                 }
@@ -99,12 +97,12 @@ fn graph_components(plots: &Plots, vertices: &HashSet<Coords>) -> usize {
 }
 
 fn part2(plots: &Plots) -> usize {
-    let mut states = Grid::new(vec![vec![State::NEW; plots.height]; plots.width]);
+    let mut states = Grid::new(vec![vec![State::New; plots.height]; plots.width]);
     let mut price: usize = 0;
 
     // outer loop: iterate over all plots
     for root in itertools::iproduct!(0..plots.height, 0..plots.width) {
-        if states[root] == State::SEEN {
+        if states[root] == State::Seen {
             continue;
         }
         let current_label = plots[root];
@@ -113,28 +111,27 @@ fn part2(plots: &Plots) -> usize {
 
         let mut stack: Vec<Coords> = Vec::new();
         stack.push(root);
-        while stack.len() > 0 {
-            let curr_pos = stack.pop().unwrap();
+        while let Some(curr_pos) = stack.pop() {
             match states[curr_pos] {
-                State::SEEN => continue,
-                State::WIP => states[curr_pos] = State::SEEN,
-                State::NEW => {
-                    states[curr_pos] = State::WIP;
+                State::Seen => continue,
+                State::Wip => states[curr_pos] = State::Seen,
+                State::New => {
+                    states[curr_pos] = State::Wip;
                     current_area += 1;
 
                     for direction in PRINCIPAL_DIRECTIONS {
                         if let Some(next_pos) = plots.walk(curr_pos, direction) {
                             if plots[next_pos] == current_label {
-                                if states[next_pos] == State::NEW {
+                                if states[next_pos] == State::New {
                                     stack.push(next_pos);
                                 }
                             } else {
                                 let d_edges =
-                                    edges.entry(direction).or_insert_with(|| HashSet::new());
+                                    edges.entry(direction).or_default();
                                 d_edges.insert(curr_pos);
                             }
                         } else {
-                            let d_edges = edges.entry(direction).or_insert_with(|| HashSet::new());
+                            let d_edges = edges.entry(direction).or_default();
                             d_edges.insert(curr_pos);
                         }
                     }
@@ -144,7 +141,7 @@ fn part2(plots: &Plots) -> usize {
 
         let current_perimeter: usize = edges
             .values()
-            .map(|d_edges| graph_components(plots, &d_edges))
+            .map(|d_edges| graph_components(plots, d_edges))
             .sum();
         price += current_area * current_perimeter;
     }

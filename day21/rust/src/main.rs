@@ -1,5 +1,6 @@
 use itertools::Itertools;
 use lazy_static::lazy_static;
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
@@ -83,7 +84,7 @@ fn generate_all_pad_paths() -> HashMap<(PadNum, PadNum), Vec<Vec<Dir>>> {
                 distances.insert((*node_i, *node_j), 1);
                 paths
                     .entry((*node_i, *node_j))
-                    .or_insert_with(Vec::new)
+                    .or_default()
                     .push(vec![*dir]);
             }
         }
@@ -100,39 +101,43 @@ fn generate_all_pad_paths() -> HashMap<(PadNum, PadNum), Vec<Vec<Dir>>> {
                             distances.get(&(*node_k, *node_j)).map(|&d_kj| d_ik + d_kj)
                         })
                         .unwrap_or(i32::MAX);
-                    if new_d < curr_d {
-                        // replace current paths since taking k is shorter
-                        distances.insert((*node_i, *node_j), new_d);
-                        let mut new_paths = vec![];
-                        for paths_ik in paths.get(&(*node_i, *node_k)).unwrap() {
-                            for paths_kj in paths.get(&(*node_k, *node_j)).unwrap() {
-                                let mut new_path: Vec<Dir> = vec![];
-                                new_path.reserve(paths_ik.len() + paths_kj.len());
-                                new_path.extend(paths_ik);
-                                new_path.extend(paths_kj);
-                                new_paths.push(new_path);
+                    match new_d.cmp(&curr_d) {
+                        Ordering::Less => {
+                            // replace current paths since taking k is shorter
+                            distances.insert((*node_i, *node_j), new_d);
+                            let mut new_paths = vec![];
+                            for paths_ik in paths.get(&(*node_i, *node_k)).unwrap() {
+                                for paths_kj in paths.get(&(*node_k, *node_j)).unwrap() {
+                                    let mut new_path: Vec<Dir> =
+                                        Vec::with_capacity(paths_ik.len() + paths_kj.len());
+                                    new_path.extend(paths_ik);
+                                    new_path.extend(paths_kj);
+                                    new_paths.push(new_path);
+                                }
                             }
+                            paths.insert((*node_i, *node_j), new_paths);
                         }
-                        paths.insert((*node_i, *node_j), new_paths);
-                    } else if new_d == curr_d {
-                        if new_d == i32::MAX {
-                            continue;
-                        }
-                        // add new paths since taking k is equal
-                        let mut new_paths: Vec<Vec<Dir>> = vec![];
-                        for paths_ik in paths.get(&(*node_i, *node_k)).unwrap() {
-                            for paths_kj in paths.get(&(*node_k, *node_j)).unwrap() {
-                                let mut new_path: Vec<Dir> = vec![];
-                                new_path.reserve(paths_ik.len() + paths_kj.len());
-                                new_path.extend(paths_ik);
-                                new_path.extend(paths_kj);
-                                new_paths.push(new_path);
+                        Ordering::Equal => {
+                            if new_d == i32::MAX {
+                                continue;
                             }
+                            // add new paths since taking k is equal
+                            let mut new_paths: Vec<Vec<Dir>> = vec![];
+                            for paths_ik in paths.get(&(*node_i, *node_k)).unwrap() {
+                                for paths_kj in paths.get(&(*node_k, *node_j)).unwrap() {
+                                    let mut new_path: Vec<Dir> =
+                                        Vec::with_capacity(paths_ik.len() + paths_kj.len());
+                                    new_path.extend(paths_ik);
+                                    new_path.extend(paths_kj);
+                                    new_paths.push(new_path);
+                                }
+                            }
+                            paths
+                                .get_mut(&(*node_i, *node_j))
+                                .get_or_insert(&mut vec![])
+                                .extend(new_paths);
                         }
-                        paths
-                            .get_mut(&(*node_i, *node_j))
-                            .get_or_insert(&mut vec![])
-                            .extend(new_paths);
+                        _ => {}
                     }
                 }
             }
@@ -149,7 +154,7 @@ fn shortest_path_pair(a: PadNum, b: PadNum, level: i32) -> usize {
     {
         let cache = SHORTEST_PATH_PAIRS.lock().unwrap();
         if cache.contains_key(&(a, b, level)) {
-            return cache.get(&(a, b, level)).unwrap().clone();
+            return *cache.get(&(a, b, level)).unwrap();
         }
     }
     let paths: Vec<Vec<char>> = PAD_PATHS
@@ -175,20 +180,20 @@ fn shortest_path_pair(a: PadNum, b: PadNum, level: i32) -> usize {
     };
 
     let mut cache = SHORTEST_PATH_PAIRS.lock().unwrap();
-    cache.insert((a, b, level), final_path.clone());
+    cache.insert((a, b, level), final_path);
 
-    final_path.clone()
+    final_path
 }
 
 fn shortest_path(sequence: Vec<char>, levels: i32) -> usize {
     std::iter::once('A')
-        .chain(sequence.clone().into_iter())
+        .chain(sequence.clone())
         .tuple_windows()
         .map(|(a, b)| shortest_path_pair(a, b, levels))
         .sum()
 }
 
-fn run(inputs: &Vec<(Vec<char>, usize)>, part1: bool) -> usize {
+fn run(inputs: &[(Vec<char>, usize)], part1: bool) -> usize {
     let levels = if part1 { 3 } else { 26 };
     inputs
         .iter()

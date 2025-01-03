@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::ops::Index;
 
 struct Report {
@@ -21,7 +22,7 @@ impl Index<usize> for Report {
     }
 }
 
-fn part1(reports: &Vec<Report>) -> u32 {
+fn part1(reports: &[Report]) -> u32 {
     reports
         .iter()
         .map(|report| {
@@ -31,21 +32,23 @@ fn part1(reports: &Vec<Report>) -> u32 {
                     return 0;
                 }
             }
-            return 1;
+            1
         })
         .sum()
 }
 
-fn part2(reports: &Vec<Report>) -> u32 {
+fn part2(reports: &[Report]) -> u32 {
     reports
         .iter()
         .map(|report| {
-            if report.len() < 3 {
-                return 1;
-            } else if report.len() == 3 {
-                return (report.check_adj(0, 1, None)
-                    || report.check_adj(1, 2, None)
-                    || report.check_adj(0, 2, None)) as u32;
+            match report.len().cmp(&3) {
+                Ordering::Less => return 1,
+                Ordering::Equal => {
+                    return (report.check_adj(0, 1, None)
+                        || report.check_adj(1, 2, None)
+                        || report.check_adj(0, 2, None)) as u32;
+                }
+                _ => {}
             }
             let diff_sign: bool = [
                 report.levels[0] < report.levels[1],
@@ -105,9 +108,9 @@ fn part2(reports: &Vec<Report>) -> u32 {
             } else {
                 report.len() - 2
             };
-            return (removed_idx.is_none()
+            (removed_idx.is_none()
                 || report.check_adj(penultimate, report.len() - 1, Some(diff_sign)))
-                as u32;
+                as u32
         })
         .sum()
 }

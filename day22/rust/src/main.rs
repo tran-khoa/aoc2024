@@ -3,11 +3,10 @@ use std::collections::{HashMap, VecDeque};
 fn evolve(number: i64) -> i64 {
     let number = ((number * 64) ^ number) % 16777216;
     let number = ((number / 32) ^ number) % 16777216;
-    let number = ((number * 2048) ^ number) % 16777216;
-    number
+    ((number * 2048) ^ number) % 16777216
 }
 
-fn part1(buyers: &Vec<i64>) -> i64 {
+fn part1(buyers: &[i64]) -> i64 {
     buyers
         .iter()
         .map(|buyer_n| {
@@ -15,12 +14,12 @@ fn part1(buyers: &Vec<i64>) -> i64 {
             for _ in 0..2000 {
                 buyer_n = evolve(buyer_n);
             }
-            return buyer_n;
+            buyer_n
         })
         .sum()
 }
 
-fn part2(buyers: &Vec<i64>) -> i64 {
+fn part2(buyers: &[i64]) -> i64 {
     *buyers
         .iter()
         .map(|buyer_n| {
@@ -34,9 +33,7 @@ fn part2(buyers: &Vec<i64>) -> i64 {
                     diffs.push_back(price - prev_price);
                     if diffs.len() > 4 {
                         let quadtup = (diffs[0], diffs[1], diffs[2], diffs[3]);
-                        if !buying_sequences.contains_key(&quadtup) {
-                            buying_sequences.insert(quadtup, prev_price);
-                        }
+                        buying_sequences.entry(quadtup).or_insert(prev_price);
                         diffs.pop_front();
                     }
                 }

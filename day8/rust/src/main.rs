@@ -21,7 +21,7 @@ fn part1(map: &str, positions: &HashMap<char, Vec<(usize, usize)>>) -> usize {
                     {
                         return Some((p_new.0 as usize, p_new.1 as usize));
                     }
-                    return None;
+                    None
                 })
                 .filter(|x| x.is_some())
         })
@@ -51,7 +51,7 @@ fn part2(map: &str, positions: &HashMap<char, Vec<(usize, usize)>>) -> usize {
             }
         }
     }
-    antinodes.iter().count()
+    antinodes.len()
 }
 
 fn main() {
@@ -62,7 +62,7 @@ fn main() {
             if c == '.' {
                 return;
             }
-            positions.entry(c).or_insert_with(Vec::new).push((row, col));
+            positions.entry(c).or_default().push((row, col));
         })
     });
 

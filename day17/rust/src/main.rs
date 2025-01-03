@@ -96,7 +96,7 @@ impl Computer {
                     self.next_instruction();
                 }
                 1 => {
-                    self.b = self.b ^ self.fetch_operand();
+                    self.b ^= self.fetch_operand();
                     self.next_instruction();
                 }
                 2 => {
@@ -180,7 +180,7 @@ fn part2(comp: &Computer) -> u64 {
             }
         });
         search_candidates = new_search_candidates;
-        if search_candidates.len() == 0 {
+        if search_candidates.is_empty() {
             println!("No candidates found for {}", target);
             break;
         }

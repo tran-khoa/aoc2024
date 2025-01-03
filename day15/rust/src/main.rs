@@ -17,18 +17,18 @@ enum Entity2 {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Direction {
-    UP,
-    DOWN,
-    LEFT,
-    RIGHT,
+    Up,
+    Down,
+    Left,
+    Right,
 }
 impl Direction {
     fn translate(&self, robot: &Coords) -> Coords {
         match self {
-            Direction::UP => (robot.0 - 1, robot.1),
-            Direction::DOWN => (robot.0 + 1, robot.1),
-            Direction::LEFT => (robot.0, robot.1 - 1),
-            Direction::RIGHT => (robot.0, robot.1 + 1),
+            Direction::Up => (robot.0 - 1, robot.1),
+            Direction::Down => (robot.0 + 1, robot.1),
+            Direction::Left => (robot.0, robot.1 - 1),
+            Direction::Right => (robot.0, robot.1 + 1),
         }
     }
 }
@@ -40,7 +40,7 @@ type Map2 = HashMap<Coords, Entity2>;
 fn map_move<T: Copy>(map: &mut HashMap<Coords, T>, coords: &Coords, dir: &Direction) {
     let entity = map[coords];
     let new_coords = dir.translate(coords);
-    map.remove(&coords);
+    map.remove(coords);
     map.insert(new_coords, entity);
 }
 
@@ -59,18 +59,18 @@ fn apply_map_moves<T: Copy>(
 }
 
 fn move_box(map: &mut Map, box_coords: &Coords, dir: &Direction) -> bool {
-    let next = dir.translate(&box_coords);
+    let next = dir.translate(box_coords);
 
     match map.get(&next) {
         Some(Entity::Wall) => false,
         Some(Entity::Robot) => panic!("how even"),
         None => {
-            map_move(map, &box_coords, dir);
+            map_move(map, box_coords, dir);
             true
         }
         Some(Entity::Box) => {
-            if move_box(map, &next, &dir) {
-                map_move(map, &box_coords, dir);
+            if move_box(map, &next, dir) {
+                map_move(map, box_coords, dir);
                 return true;
             }
             false
@@ -111,7 +111,7 @@ fn part1(map_str: &str, dirs: &Vec<Direction>) -> i32 {
             }
             Some(Entity::Robot) => panic!("how even"),
             Some(Entity::Box) => {
-                if move_box(&mut map, &next_coord, &m) {
+                if move_box(&mut map, &next_coord, m) {
                     map_move(&mut map, &robot, m);
                     robot = next_coord;
                 }
@@ -139,12 +139,12 @@ fn try_move_large(map: &Map2, coords: &Coords, dir: &Direction) -> Option<HashSe
         },
         Some(large_box) => {
             let (box_left, box_right) = match large_box {
-                Entity2::BoxLeft => (*coords, Direction::RIGHT.translate(&coords)),
-                Entity2::BoxRight => (Direction::LEFT.translate(&coords), *coords),
+                Entity2::BoxLeft => (*coords, Direction::Right.translate(coords)),
+                Entity2::BoxRight => (Direction::Left.translate(coords), *coords),
                 _ => panic!("can't happen"),
             };
             match dir {
-                Direction::LEFT => {
+                Direction::Left => {
                     let next = dir.translate(&box_left);
                     match try_move_large(map, &next, dir) {
                         None => None,
@@ -155,7 +155,7 @@ fn try_move_large(map: &Map2, coords: &Coords, dir: &Direction) -> Option<HashSe
                         }
                     }
                 }
-                Direction::RIGHT => {
+                Direction::Right => {
                     let next = dir.translate(&box_right);
                     match try_move_large(map, &next, dir) {
                         None => None,
@@ -166,7 +166,7 @@ fn try_move_large(map: &Map2, coords: &Coords, dir: &Direction) -> Option<HashSe
                         }
                     }
                 }
-                Direction::UP | Direction::DOWN => {
+                Direction::Up | Direction::Down => {
                     let next_left = dir.translate(&box_left);
                     let next_right = dir.translate(&box_right);
 
@@ -187,8 +187,7 @@ fn try_move_large(map: &Map2, coords: &Coords, dir: &Direction) -> Option<HashSe
                     match try_move_large(map, &next_right, dir) {
                         None => None,
                         Some(ts) => {
-                            let mut ts: HashSet<Coords> =
-                                ts.union(&mut ts_left).map(|&x| x).collect();
+                            let mut ts: HashSet<Coords> = ts.union(&ts_left).copied().collect();
                             ts.insert(box_left);
                             ts.insert(box_right);
                             Some(ts)
@@ -258,7 +257,7 @@ fn print_map2(map2: &Map2, height: i32, width: i32) {
                 }
             )
         }
-        print!("\n");
+        println!();
     }
 }
 
@@ -269,10 +268,10 @@ fn main() {
         .lines()
         .flat_map(|l| {
             l.chars().map(|c| match c {
-                '^' => Direction::UP,
-                'v' => Direction::DOWN,
-                '<' => Direction::LEFT,
-                '>' => Direction::RIGHT,
+                '^' => Direction::Up,
+                'v' => Direction::Down,
+                '<' => Direction::Left,
+                '>' => Direction::Right,
                 _ => panic!("Invalid character '{}'", c),
             })
         })

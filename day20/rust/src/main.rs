@@ -44,7 +44,6 @@ struct Maze {
     width: i32,
 }
 
-
 impl Maze {
     fn new(input_str: &str) -> Self {
         let mut start = None;
@@ -55,9 +54,8 @@ impl Maze {
                 line.chars()
                     .enumerate()
                     .map(|(x, c)| {
-                        match c {
-                            'S' => start = Some(Position(x as i32, y as i32)),
-                            _ => (),
+                        if c == 'S' {
+                            start = Some(Position(x as i32, y as i32))
                         }
                         c
                     })

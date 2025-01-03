@@ -23,7 +23,7 @@ fn dfs_paths(map: &Vec<Vec<u32>>, pos: (usize, usize), cache: &mut HashMap<(usiz
         if map[neighbor_pos.0][neighbor_pos.1] != next_val {
             continue;
         }
-        dfs_paths(&map, neighbor_pos, cache);
+        dfs_paths(map, neighbor_pos, cache);
         paths += cache.get(&neighbor_pos).unwrap();
     }
     cache.insert(pos, paths);
@@ -38,7 +38,7 @@ fn dfs_unique_ends(
         return;
     }
     if map[pos.0][pos.1] == 9 {
-        cache.entry(pos).or_insert(HashSet::new()).insert(pos);
+        cache.entry(pos).or_default().insert(pos);
         return;
     }
     let next_val = map[pos.0][pos.1] + 1;
@@ -56,7 +56,7 @@ fn dfs_unique_ends(
         if map[neighbor_pos.0][neighbor_pos.1] != next_val {
             continue;
         }
-        dfs_unique_ends(&map, neighbor_pos, cache);
+        dfs_unique_ends(map, neighbor_pos, cache);
         let neighbor_res = cache.get(&neighbor_pos).unwrap().clone();
         cache.get_mut(&pos).unwrap().extend(neighbor_res);
     }
@@ -67,7 +67,7 @@ fn part1(map: &Vec<Vec<u32>>) -> u32 {
     let mut score_sum = 0;
     for (i, j) in itertools::iproduct!(0..map.len(), 0..map[0].len()) {
         if map[i][j] == 0 {
-            dfs_unique_ends(&map, (i, j), &mut cache);
+            dfs_unique_ends(map, (i, j), &mut cache);
             score_sum += cache[&(i, j)].len() as u32;
         }
     }
@@ -79,7 +79,7 @@ fn part2(map: &Vec<Vec<u32>>) -> u32 {
     let mut score_sum = 0;
     for (i, j) in itertools::iproduct!(0..map.len(), 0..map[0].len()) {
         if map[i][j] == 0 {
-            dfs_paths(&map, (i, j), &mut cache);
+            dfs_paths(map, (i, j), &mut cache);
             score_sum += cache[&(i, j)];
         }
     }

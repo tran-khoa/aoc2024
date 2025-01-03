@@ -27,8 +27,8 @@ impl Graph {
         for (a, b) in edges {
             let a_idx = nodes.iter().position(|n| n == &a).unwrap();
             let b_idx = nodes.iter().position(|n| n == &b).unwrap();
-            adjs.entry(a_idx).or_insert(HashSet::new()).insert(b_idx);
-            adjs.entry(b_idx).or_insert(HashSet::new()).insert(a_idx);
+            adjs.entry(a_idx).or_default().insert(b_idx);
+            adjs.entry(b_idx).or_default().insert(a_idx);
         }
         Graph { adjs, nodes }
     }

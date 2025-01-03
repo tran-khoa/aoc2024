@@ -32,19 +32,19 @@ fn math_optimum_arcade_prize(arcade: &Arcade) -> Option<u64> {
     None
 }
 
-fn part1(arcades: &Vec<Arcade>) -> u64 {
-    arcades.iter().filter_map(|a| math_optimum_arcade_prize(a)).sum()
+fn part1(arcades: &[Arcade]) -> u64 {
+    arcades.iter().filter_map(math_optimum_arcade_prize).sum()
 }
-fn part2(arcades: &Vec<Arcade>) -> u64{
+fn part2(arcades: &[Arcade]) -> u64 {
     let arcades: Vec<Arcade> = arcades
         .iter()
         .map(|a| Arcade {
             button_a: a.button_a,
             button_b: a.button_b,
             prize: Point {
-                    x: a.prize.x + 10000000000000,
-                    y: a.prize.y + 10000000000000,
-                },
+                x: a.prize.x + 10000000000000,
+                y: a.prize.y + 10000000000000,
+            },
         })
         .collect();
     part1(&arcades)

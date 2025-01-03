@@ -28,7 +28,7 @@ fn get_adjacent(obstacles: &[Coords], of: &Coords, max_x: i32, max_y: i32) -> Ve
     adjacents
 }
 
-fn part1(obstacles: &Vec<Coords>, max_x: i32, max_y: i32, first_bytes: usize) -> i32 {
+fn part1(obstacles: &[Coords], max_x: i32, max_y: i32, first_bytes: usize) -> i32 {
     let first_kb = &obstacles[0..first_bytes];
     let mut explored: HashSet<Coords> = HashSet::new();
     let mut queue: VecDeque<Coords> = VecDeque::new();
@@ -38,7 +38,7 @@ fn part1(obstacles: &Vec<Coords>, max_x: i32, max_y: i32, first_bytes: usize) ->
     queue.push_back(root);
 
     let mut found_path: bool = false;
-    while queue.len() > 0 {
+    while !queue.is_empty() {
         let node = queue.pop_front().unwrap();
         if node == (max_x, max_y) {
             found_path = true;
@@ -65,7 +65,7 @@ fn part1(obstacles: &Vec<Coords>, max_x: i32, max_y: i32, first_bytes: usize) ->
     }
 }
 
-fn part2(obstacles: &Vec<Coords>, max_x: i32, max_y: i32) -> Coords {
+fn part2(obstacles: &[Coords], max_x: i32, max_y: i32) -> Coords {
     let mut left = 0;
     let mut right = obstacles.len();
     while left < right {
