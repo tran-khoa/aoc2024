@@ -1,0 +1,9 @@
+[package]
+name = "day24"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+regex = "1.11.1"
+ahash = "0.8.11"
+rayon = "1.10.0"
